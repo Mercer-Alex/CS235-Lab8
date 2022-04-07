@@ -39,7 +39,7 @@ struct Node {
     Node* left;
     Node* right;
     explicit Node(Interval<T> const& interval) : interval(interval), min_max(interval),
-                                                 left(nullptr), right(nullptr) {}
+        left(nullptr), right(nullptr) {}
 };
 
 template<class T>
@@ -204,7 +204,7 @@ string to_string(T const& collection) {
 template<class T>
 void test(string const& message, T const &observed, T const &expected) {
     cout << message << endl;
-    cout << "Expected:" << endl << expected << "Observed:" << endl << observed << endl;
+    cout << "Expected:" << endl << expected << endl << "Observed:" << endl << observed << endl;
     if (expected == observed) {
         cout << "Passed ✅" << endl;
     } else {

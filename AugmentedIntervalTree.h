@@ -9,35 +9,60 @@
 
 template<class T>
 class AugmentedIntervalTree: public IntervalTree<T> {
-protected:
+private:
+    bool _add(Node<T>*& node, T const& lower, T const& upper) {
+        if (node == nullptr) {
+            Interval<T> interval(lower, upper);
+            node = new Node<T>(interval);
+            return true;
+        } else {
+            if (lower < node->min_max.lower) {
+                node->min_max.lower = lower;
+            }
+            if (upper > node->min_max.upper) {
+                node->min_max.upper = upper;
+            }
+            if (lower < node->interval.lower) {
+                return _add(node->left, lower, upper);
+            }
+            else if (lower > node->interval.lower) {
+                return _add(node->right, lower, upper);
+            }
+            else {
+                if (upper > node->interval.upper) {
+                    return _add(node->right, lower, upper);
+                }
+                else if (upper < node->interval.upper) {
+                    return _add(node->left, lower, upper);
+                }
+            }
+        }
 
-    /*
-     * You'll need to delete this node and its children in your destructor
-     */
-    Node<T>* root;
-
-    /*
-     * You don't need to do anything with this method.
-     * It's a helper method for the public to_string method down below.
-     */
-    string _to_string(Node<T>* const& node, int depth) const {
-        stringstream ss;
-        if (node->right != nullptr) {
-            ss << _to_string(node->right, depth+1);
-        }
-        for (int i = 0; i < depth; i++) {
-            ss << "   ";
-        }
-        ss << node->interval;
-        ss << "<" << node->min_max << ">" << endl;
-        if (node->left != nullptr) {
-            ss << _to_string(node->left, depth+1);
-        }
-        return ss.str();
+        return false;
     }
 
+    vector<Interval<T>> _query(Node<T>* const& node, T const& point) const {
+        vector<Interval<T>> retVec;
+        if (node == nullptr) {
+            return  retVec;
+        }
+        if (node->left != nullptr && point >= node->left->min_max.lower && point < node->left->min_max.upper) {
+            vector<Interval<T>> temp = _query(node->left, point);
+            retVec.insert(retVec.end(), temp.begin(), temp.end());
+        }
+        if (point >= node->interval.lower && point < node->interval.upper) {
+            retVec.push_back(node->interval);
+        }
+        if (node->right != nullptr && point >= node->right->min_max.lower && point < node->right->min_max.upper) {
+            vector<Interval<T>> temp = _query(node->right, point);
+            retVec.insert(retVec.end(), temp.begin(), temp.end());
+        }
+        return retVec;
+    }
 public:
-    AugmentedIntervalTree() : root(nullptr) {}
+    AugmentedIntervalTree() {
+        this->root = nullptr;
+    }
     /*
      * Normally, a base class should manage all of its variables,
      * (i.e. delete root and its children)
@@ -45,37 +70,39 @@ public:
      * so, the child class should delete any relevant state.
      */
     ~AugmentedIntervalTree() {
-        cout << "destructor" << endl;
+        clear();
     }
 
-    /*
-     * Should delete all the intervals in the tree
-     */
-    void clear() {
-        cout << "clearing" << endl;
+    void clear() override {
+        _clear(this->root);
+        this->root = nullptr;
     }
-    /*
-     * Returns true if there are no intervals in the tree
-     */
+    void _clear(Node<T> *&node) {
+        if (node == nullptr) {
+            return;
+        }
+        _clear(node->left);
+        _clear(node->right);
+        delete node;
+    }
     bool is_empty() const {
-        cout << "empty?" << endl;
-        return true;
+        return this->root == nullptr;
     }
     /*
      * Add an interval to the tree
      * Make sure you update the min and max bounds on each node touched!
      */
     bool add(T const& lower, T const& upper) {
-        cout << "adding" << endl;
-        return true;
+        return _add(this->root, lower, upper);
     }
+
     /*
      * Query for ALL intervals that overlap the given point
      * The output vector must be sorted
      * Hint: perform the binary search using an inorder traversal
      */
     vector<Interval<T>> query(T const& point) const {
-        cout << "query" << endl;
+        return _query(this->root, point);
     }
     /*
      * Remove the interval defined by the given lower and upper bounds
@@ -84,16 +111,6 @@ public:
     bool remove(T const& lower, T const& upper) {
         cout << "removing" << endl;
         return true;
-    }
-
-    /*
-     * A handy method for visualizing the structure of the tree
-     * You don't need to override this, but you may find it useful
-     *   in writing tests and debugging
-     */
-    string to_string() const {
-        if (root == nullptr) { return ""; }
-        return _to_string(root, 0);
     }
 };
 
